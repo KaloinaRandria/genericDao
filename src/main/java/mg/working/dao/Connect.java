@@ -1,24 +1,29 @@
 package mg.working.dao;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-import java.io.InputStream;
 
 public class Connect {
+    private static final String DEFAULT_CONFIG_PATH = "db.properties"; // Chemin par défaut
+
     public static Connection dbConnect() {
+        return dbConnect(DEFAULT_CONFIG_PATH); // Utilise le chemin par défaut si aucun n'est spécifié
+    }
+
+    public static Connection dbConnect(String configPath) {
         Connection connection = null;
         Properties prop = new Properties();
 
-        try (InputStream input = Connect.class.getClassLoader().getResourceAsStream("db.properties")) {
-            if (input == null) {
-                throw new IOException("Fichier db.properties introuvable dans le classpath");
-            }
-            prop.load(input);
+        try (FileInputStream fis = new FileInputStream(configPath)) {
+            // Charger le fichier .properties
+            prop.load(fis);
         } catch (IOException e) {
-            System.err.println("Erreur lors du chargement du fichier db.properties : " + e.getMessage());
+            System.err.println("Erreur lors du chargement du fichier " + configPath + " : " + e.getMessage());
+            return null; // Retourne une connexion nulle en cas de problème
         }
 
         try {
@@ -29,7 +34,7 @@ public class Connect {
 
             // Vérifier si les valeurs sont nulles
             if (url == null || user == null || password == null) {
-                throw new IllegalArgumentException("Les paramètres de connexion (URL, utilisateur ou mot de passe) sont absents dans le fichier db.properties");
+                throw new IllegalArgumentException("Les paramètres de connexion (URL, utilisateur ou mot de passe) sont absents dans le fichier " + configPath);
             }
 
             // Charger le driver JDBC
