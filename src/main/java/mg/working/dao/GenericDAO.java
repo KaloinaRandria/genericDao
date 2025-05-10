@@ -44,7 +44,7 @@ public class GenericDAO {
 
     }
 
-    public List<Object> findAll(Connection connection , Object object) throws SQLException {
+    public List<?> findAll(Connection connection , Object object) throws SQLException {
         boolean check = false;
         List<Object> objects;
         try {
