@@ -65,7 +65,7 @@ public class GenericDAO {
         return objects;
     }
 
-    public List<Object> findCriteria(Connection connection, Object object) throws SQLException {
+    public List<?> findCriteria(Connection connection, Object object) throws SQLException {
         boolean check = false;
         List<Object> objects = null;
         try {
@@ -95,7 +95,7 @@ public class GenericDAO {
         return objects;
     }
 
-    public List<Object> findIntervalle(Connection connection ,Object object, Object value1 , Object value2) throws SQLException {
+    public List<?> findIntervalle(Connection connection ,Object object, Object value1 , Object value2) throws SQLException {
         boolean check = false;
         List<Object> objects = null;
         try {
@@ -149,7 +149,7 @@ public class GenericDAO {
         return objects;
     }
 
-    public List<Object> pagination(Connection connection , Object object, int debut, int limite) throws SQLException {
+    public List<?> pagination(Connection connection , Object object, int debut, int limite) throws SQLException {
         boolean check = false;
         List<Object> objects = null;
         try {
