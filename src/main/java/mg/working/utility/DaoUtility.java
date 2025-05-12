@@ -65,56 +65,60 @@ public class DaoUtility {
     }
 
     public static String getListColumns(Object object) {
-        String[] columns = getAllColumn(object);
+        Field[] fields = object.getClass().getDeclaredFields();
         StringBuilder valiny = new StringBuilder("(");
-        for (int i = 0; i < columns.length; i++) {
-            String column = columns[i];
-            valiny.append(column);
-            if (i != columns.length - 1) valiny.append(",");
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i].getAnnotation(PrimaryKey.class) == null) {
+                String columnName = fields[i].getName();
+                if (fields[i].isAnnotationPresent(Column.class)) {
+                    Column column = fields[i].getAnnotation(Column.class);
+                    if (!column.name().equals("")) {
+                        columnName = column.name();
+                    }
+                }
+                valiny.append(columnName);
+                if (i != fields.length - 1) valiny.append(",");
+            }
+        }
+        // Retirer la dernière virgule s'il reste une
+        if (valiny.charAt(valiny.length() - 1) == ',') {
+            valiny.deleteCharAt(valiny.length() - 1);
         }
         valiny.append(")");
         return valiny.toString();
     }
 
-    public static Object[] getAttributeValues(Object object) {
-        Field[] fields = object.getClass().getDeclaredFields();
-        Object[] attributeValues = new Object[fields.length];
-        for (int i = 0; i < attributeValues.length; i++) {
-            try {
-                if (fields[i].getAnnotation(PrimaryKey.class) != null) {
-                    attributeValues[i] = "default";
-                } else {
-                    if (fields[i].isAccessible()) {
-                        attributeValues[i] = fields[i].get(object);
-                    }
-                    else {
-                        fields[i].setAccessible(true);
-                        attributeValues[i] = fields[i].get(object);
-                        fields[i].setAccessible(false);
-                    }
-                }
-            }catch (Exception e){
-                throw new RuntimeException(e);
+public static Object[] getAttributeValues(Object object) {
+    Field[] fields = object.getClass().getDeclaredFields();
+    List<Object> attributeValues = new ArrayList<>();
+    for (Field field : fields) {
+        try {
+            // Ignorer les champs annotés avec @PrimaryKey
+            if (field.getAnnotation(PrimaryKey.class) == null) {
+                field.setAccessible(true); // Rendre accessible les champs privés
+                attributeValues.add(field.get(object)); // Ajouter la valeur
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return attributeValues;
     }
-    public static String generateBaraingo(Object object) {
-        StringBuilder valiny = new StringBuilder("(");
-        Object[] attributeValues = getAttributeValues(object);
-        Field[] fields = object.getClass().getDeclaredFields();
-        for (int i = 0; i < attributeValues.length; i++) {
-            if (fields[i].getAnnotation(PrimaryKey.class) != null) {
-                valiny.append("default");
-                if (i != attributeValues.length -1) valiny.append(",");
-            } else {
-                valiny.append("?");
-                if (i != attributeValues.length -1) valiny.append(",");
-            }
+    return attributeValues.toArray();
+}
+public static String generateBaraingo(Object object) {
+    StringBuilder placeholders = new StringBuilder("(");
+    Field[] fields = object.getClass().getDeclaredFields();
+    for (Field field : fields) {
+        if (field.getAnnotation(PrimaryKey.class) == null) {
+            placeholders.append("?,");
         }
-        valiny.append(")");
-        return valiny.toString();
     }
+    // Supprimer la dernière virgule
+    if (placeholders.charAt(placeholders.length() - 1) == ',') {
+        placeholders.deleteCharAt(placeholders.length() - 1);
+    }
+    placeholders.append(")");
+    return placeholders.toString();
+}
 
     public static List<Object[]> traitementDonnees(Connection connection , String query) throws SQLException {
         List<Object[]> valiny = new ArrayList<>();
@@ -163,12 +167,4 @@ public class DaoUtility {
         }
         return valiny;
    }
-
-   public static String constructIdPK(Connection connection , Object object) {
-        String valiny = null;
-             
-        return valiny;
-    }
-
 }
-

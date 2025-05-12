@@ -12,37 +12,62 @@ import java.util.ListIterator;
 
 public class GenericDAO {
     public void save(Connection connection, Object object) throws SQLException {
-        boolean check = false;
-        try {
-            if (connection == null) {
-                connection = Connect.dbConnect();
-                check = true;
-            }
-            String query = "INSERT INTO "+ DaoUtility.getTableName(object)  + DaoUtility.getListColumns(object) + " VALUES";
-            query = query + DaoUtility.generateBaraingo(object);
-            System.out.println(query);
-            Object[] attributeValues = DaoUtility.getAttributeValues(object);
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            Field[] fields = object.getClass().getDeclaredFields();
-            System.out.println(fields.length);
-            for (int i = 0; i < attributeValues.length; i++) {
-                if (fields[i].getAnnotation(PrimaryKey.class) == null) {
-//                    System.out.println(fields[i].getName());
-                    preparedStatement.setObject(i+1,attributeValues[i]);
-                }
-            }
-            preparedStatement.executeUpdate();
-            preparedStatement.close();
-            connection.commit();
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }finally {
-            if(check) {
-                connection.close();
+    boolean localConnection = false;
+    
+    try {
+        // Vérifiez si une connexion doit être créée localement
+        if (connection == null) {
+            connection = Connect.dbConnect();
+            localConnection = true;
+            connection.setAutoCommit(false); // Désactiver le commit automatique
+        }
+
+        // Générer la requête SQL
+        String query = "INSERT INTO " + DaoUtility.getTableName(object) +
+                       DaoUtility.getListColumns(object) +
+                       " VALUES " +
+                       DaoUtility.generateBaraingo(object);
+        System.out.println("Requête générée : " + query);
+
+        // Récupérer les valeurs des attributs et préparer la requête
+        Object[] attributeValues = DaoUtility.getAttributeValues(object);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+
+        Field[] fields = object.getClass().getDeclaredFields();
+        int paramIndex = 1;
+
+        // Assigner les valeurs aux paramètres, en excluant les champs @PrimaryKey
+        for (int i = 0; i < attributeValues.length; i++) {
+            Field field = fields[i];
+            if (field.getAnnotation(PrimaryKey.class) == null) {
+                field.setAccessible(true);
+                Object value = attributeValues[i]; // Récupérer la valeur
+                System.out.println("Ajout du champ : " + field.getName() + " avec la valeur : " + value);
+                preparedStatement.setObject(paramIndex++, value); // Les `nulls` seront gérés par JDBC
             }
         }
 
+        // Exécuter la requête
+        preparedStatement.executeUpdate();
+        preparedStatement.close();
+
+        // Si la connexion est générée localement, validez la transaction
+        if (localConnection) {
+            connection.commit();
+        }
+    } catch (Exception e) {
+        // Si une exception survient, rollback si la connexion était locale
+        if (localConnection && connection != null) {
+            connection.rollback();
+        }
+        throw new RuntimeException(e);
+    } finally {
+        // Fermez la connexion si elle a été créée localement
+        if (localConnection && connection != null) {
+            connection.close();
+        }
     }
+}
 
     public List<?> findAll(Connection connection , Object object) throws SQLException {
         boolean check = false;

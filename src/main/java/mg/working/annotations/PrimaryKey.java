@@ -9,5 +9,7 @@ import java.lang.annotation.Target;
 public @interface PrimaryKey {
     String prefix();
     String sequenceName();
+    boolean autoIncrement();
+    int length();
 }
 
