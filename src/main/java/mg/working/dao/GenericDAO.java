@@ -13,9 +13,9 @@ import java.util.ListIterator;
 public class GenericDAO {
     public void save(Connection connection, Object object) throws SQLException {
     boolean localConnection = false;
-    
+
     try {
-        // Vérifiez si une connexion doit être créée localement
+        // Vérifier si une connexion doit être créée localement
         if (connection == null) {
             connection = Connect.dbConnect();
             localConnection = true;
@@ -24,26 +24,23 @@ public class GenericDAO {
 
         // Générer la requête SQL
         String query = "INSERT INTO " + DaoUtility.getTableName(object) +
-                       DaoUtility.getListColumns(object) +
-                       " VALUES " +
-                       DaoUtility.generateBaraingo(object);
+                       DaoUtility.getListColumns(object) + // Cette méthode exclut "id"
+                       " VALUES " + DaoUtility.generateBaraingo(object);
         System.out.println("Requête générée : " + query);
 
-        // Récupérer les valeurs des attributs et préparer la requête
+        // Récupérer les valeurs des attributs à insérer
         Object[] attributeValues = DaoUtility.getAttributeValues(object);
         PreparedStatement preparedStatement = connection.prepareStatement(query);
 
-        Field[] fields = object.getClass().getDeclaredFields();
+        // Assignation des placeholders
         int paramIndex = 1;
-
-        // Assigner les valeurs aux paramètres, en excluant les champs @PrimaryKey
-        for (int i = 0; i < attributeValues.length; i++) {
-            Field field = fields[i];
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
             if (field.getAnnotation(PrimaryKey.class) == null) {
                 field.setAccessible(true);
-                Object value = attributeValues[i]; // Récupérer la valeur
-                System.out.println("Ajout du champ : " + field.getName() + " avec la valeur : " + value);
-                preparedStatement.setObject(paramIndex++, value); // Les `nulls` seront gérés par JDBC
+                Object value = field.get(object);
+                System.out.println("Assignation paramètre #" + paramIndex + ": " + field.getName() + " = " + value);
+                preparedStatement.setObject(paramIndex++, value);
             }
         }
 
@@ -51,7 +48,7 @@ public class GenericDAO {
         preparedStatement.executeUpdate();
         preparedStatement.close();
 
-        // Si la connexion est générée localement, validez la transaction
+        // Commit si connexion locale
         if (localConnection) {
             connection.commit();
         }

@@ -64,45 +64,39 @@ public class DaoUtility {
         return valiny;
     }
 
-    public static String getListColumns(Object object) {
-        Field[] fields = object.getClass().getDeclaredFields();
-        StringBuilder valiny = new StringBuilder("(");
-        for (int i = 0; i < fields.length; i++) {
-            if (fields[i].getAnnotation(PrimaryKey.class) == null) {
-                String columnName = fields[i].getName();
-                if (fields[i].isAnnotationPresent(Column.class)) {
-                    Column column = fields[i].getAnnotation(Column.class);
-                    if (!column.name().equals("")) {
-                        columnName = column.name();
-                    }
-                }
-                valiny.append(columnName);
-                if (i != fields.length - 1) valiny.append(",");
-            }
+public static String getListColumns(Object object) {
+    Field[] fields = object.getClass().getDeclaredFields();
+    StringBuilder columns = new StringBuilder("(");
+    for (Field field : fields) {
+        if (field.getAnnotation(PrimaryKey.class) == null) {
+            Column column = field.getAnnotation(Column.class);
+            String columnName = (column != null && !column.name().isEmpty()) ? column.name() : field.getName();
+            columns.append(columnName).append(",");
         }
-        // Retirer la dernière virgule s'il reste une
-        if (valiny.charAt(valiny.length() - 1) == ',') {
-            valiny.deleteCharAt(valiny.length() - 1);
-        }
-        valiny.append(")");
-        return valiny.toString();
     }
+    // Retirer la dernière virgule et fermer la parenthèse
+    if (columns.charAt(columns.length() - 1) == ',') {
+        columns.deleteCharAt(columns.length() - 1);
+    }
+    columns.append(")");
+    return columns.toString();
+}
 
 public static Object[] getAttributeValues(Object object) {
     Field[] fields = object.getClass().getDeclaredFields();
-    List<Object> attributeValues = new ArrayList<>();
+    List<Object> values = new ArrayList<>();
     for (Field field : fields) {
-        try {
-            // Ignorer les champs annotés avec @PrimaryKey
-            if (field.getAnnotation(PrimaryKey.class) == null) {
-                field.setAccessible(true); // Rendre accessible les champs privés
-                attributeValues.add(field.get(object)); // Ajouter la valeur
+        // Exclure les champs annotés @PrimaryKey
+        if (field.getAnnotation(PrimaryKey.class) == null) {
+            try {
+                field.setAccessible(true); // Rendre le champ accessible
+                values.add(field.get(object)); // Ajouter la valeur du champ
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
-    return attributeValues.toArray();
+    return values.toArray();
 }
 public static String generateBaraingo(Object object) {
     StringBuilder placeholders = new StringBuilder("(");
