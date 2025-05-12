@@ -33,10 +33,10 @@ public class Main {
 //            System.out.println(((Test)testList.get(i)).getNom() +" "+ ((Test)testList.get(i)).getPrenom());
 //
 //        }
-        List<Object> testList = genericDAO.findIntervalle(Connect.dbConnect(),test,20,40);
-        for (int i = 0; i < testList.size(); i++) {
-            System.out.println(((Test)testList.get(i)).getNom() +" "+ ((Test)testList.get(i)).getPrenom());
-        }
+//        List<Object> testList = genericDAO.findIntervalle(Connect.dbConnect(),test,20,40);
+//        for (int i = 0; i < testList.size(); i++) {
+//            System.out.println(((Test)testList.get(i)).getNom() +" "+ ((Test)testList.get(i)).getPrenom());
+//        }
 //        List<Object[]> data = DaoUtility.traitementDonnees(Connect.dbConnect(),"Select * from t_test");
 //        for (int i = 0; i < data.size(); i++) {
 //            System.out.println(data.get(i).length);

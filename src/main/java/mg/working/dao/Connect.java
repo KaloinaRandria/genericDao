@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class Connect {
-    private static final String DEFAULT_CONFIG_PATH = "db.properties"; // Chemin par défaut
+    private static final String DEFAULT_CONFIG_PATH = "src/main/resources/db.properties"; // Chemin par défaut
 
     public static Connection dbConnect() {
         return dbConnect(DEFAULT_CONFIG_PATH); // Utilise le chemin par défaut si aucun n'est spécifié
